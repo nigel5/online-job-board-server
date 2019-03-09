@@ -9,25 +9,36 @@ const firestore = new Firestore({
 const trucks = firestore.collection('trucks')
 const jobs = firestore.collection('jobs')
 
-module.exports.isOnRoute = async (truckId) => {
-    var t = trucks.where('name', '==', 'NakLrvNzjDx5TDcbzWjM')
-        .then(doc => {
-            console.log(doc.data())
-        })
-    var cityRef = db.collection('cities').doc('SF');
-    var getDoc = cityRef.get()
+module.exports.isOnRoute = function (truckId, cb) {
+    var t = trucks.doc(truckId)
+    t.get()
         .then(doc => {
         if (!doc.exists) {
-            console.log('No such document!');
-        } else {
-            console.log('Document data:', doc.data());
+            console.log('No such document!')
         }
-        })
+        else {
+            if (doc.data().onRoute) {
+                return cb(true, null)
+            } else {
+                return cb(false, null)
+            }
+        }})
         .catch(err => {
-        console.log('Error getting document', err);
+            console.log('Error getting document', err);
+            return cb(null, err)
         });
 }
 
-module.exports.getJobs = async (truckId) => {
-    var j = jobs.get()
+module.exports.getJobs = function (truckId, cb) {
+    //var j  = jobs.doc(truckId)
+    jobs.get()
+        .then(snapshot => {
+            snapshot.forEach(doc => {
+                return cb(doc.data(), null)
+            });
+        })
+        .catch(err => {
+            console.log('Error retrieving job documents', err);
+            return cb(null, err)
+        })
 }

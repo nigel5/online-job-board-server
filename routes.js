@@ -1,4 +1,5 @@
 const router = require('express').Router()
+const ns = require('./nospoof')
 const rb = require('./util/response-builder')
 
 router.get('/', (req, res) => {
@@ -7,6 +8,20 @@ router.get('/', (req, res) => {
 
 router.get('/api/v1/jobs', (req, res) => {
     // Send response with list of jobs, if the truck is availble
+    ns.isOnRoute('NakLrvNzjDx5TDcbzWjM', (onRoute, err) => {
+        if (err) res.send('Internal server error:', err)
+        else if (onRoute) {
+            res.send('Truck is already on a route!')
+        }
+        else {
+            ns.getJobs('', (jobs, err) => {
+                if (err) res.json(rb.formatError(500)).status(500).end()
+                console.log(jobs)
+                res.json(rb.formatJobs(jobs)).status(200).end()
+            })
+        }
+    })
+    
 })
 
 router.post('/api/v1/select-job/:jobId', (req, res) => {
