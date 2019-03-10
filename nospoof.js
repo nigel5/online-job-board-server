@@ -58,6 +58,7 @@ module.exports.takeJob = function (truckId, jobId, cb) {
                     console.log(`Job id: ${jobId}: Job id taken by truck id ${truckId}`)
                     return cb(selectedJob, null)
                 })
+                .catch(err => { return cb(null, err) })
         })
 }
 
