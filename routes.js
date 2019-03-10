@@ -24,7 +24,7 @@ router.get('/api/v1/jobs', (req, res) => {
 
 router.post('/api/v1/select-job/:jobId', (req, res) => {
     // Only be able to select the job if the are avaiable
-    ns.isOnRoute(req.params.jobId, (onRoute, err) => {
+    ns.isOnRoute(req.body.truckId, (onRoute, err) => {
         if (err) { return res.send('Internal server error:', err) }
         if (onRoute === null && err === null) {
             res.send('Invalid truck id. Where did you get that from?').status(400).end()
@@ -33,7 +33,7 @@ router.post('/api/v1/select-job/:jobId', (req, res) => {
             res.send('Truck is already on a route!').status(200).end()
         }
         else {
-            ns.takeJob(req.params.jobId, req.body.truckId, (job, err) => {
+            ns.takeJob(req.body.truckId, req.params.jobId, (job, err) => {
                 if (err) { return res.json(rb.formatError(500)).status(500).end() }
                 res.json(rb.formatJobs({ job })).status(200).end()
             })

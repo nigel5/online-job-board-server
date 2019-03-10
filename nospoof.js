@@ -13,13 +13,13 @@ const jobs = firestore.collection('jobs')
 module.exports.isOnRoute = function (truckId, cb) {
     var t = trucks.doc(truckId)
     t.get()
-        .then(doc => {
-        if (!doc.exists) {
+        .then(tDoc => {
+        if (!tDoc.exists) {
             console.log(`Truck id: ${truckId}: Does not exist`)
             return cb(null, null)
         }
         else {
-            if (doc.data().onRoute) {
+            if (tDoc.data().onRoute) {
                 console.log(`Truck id: ${truckId}: Request isOnRoute = true`)
                 return cb(true, null)
             } else {
