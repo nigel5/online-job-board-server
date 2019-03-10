@@ -53,10 +53,10 @@ module.exports.takeJob = function (truckId, jobId, cb) {
                     var selectedTruck = tDoc.data()
                     // Update truck and job
                     const unlockKey = Math.floor(Math.random()*90000) + 10000
-                    t.update({ onRoute: true, currentJob: j.id })
+                    t.update({ onRoute: true, currentJob: j.id, key: unlockKey })
                     j.update({ driver: t.id, key: unlockKey })
 
-                    console.log(`Job id: ${jobId}: Job id taken by truck id ${truckId}`)
+                    console.log(`Job id: ${jobId}: Job id taken by truck id ${truckId}. Key: ${unlockkey}`)
                     return cb(selectedJob, null)
                 })
                 .catch(err => { return cb(null, err) })
@@ -130,25 +130,27 @@ module.exports.loadStatus = function(jobId, cb) {
             console.log(`Job id: ${jobId}: Request for loadStatus: Job id does not exist`)
             return cb(null, null)
         }
-        // Search for trucker, by currentJob field
-        var t = trucks.where('currentJob', '==', jobId)
-        t.get()
-        .then(tDoc => {
-            if (!tDoc.exists) {
-                console.log(`Job id: ${jobId} Has truck id that does not exist. There could be no driver assigned to this load. Could not query for load information`)
-                return cb(null, null)
-            }
-            // Now we have the truck's unlock key
-            const key = tDoc.data().key
-            console.log(key)
-            var doc = jDoc.data()
-            console.log(`Job id: ${jobId}: Request for loadStatus: delivered: ${doc.delivered ? true: `FALSE. KEY: ${key}`}`)
-            if (!doc.delivered) { return cb({ "data": { "delivered": false, "key": key } }, null) }
+        var doc = jDoc.data()
+        console.log(`Job id: ${jobId}: Request for loadStatus: delivered: ${doc.delivered ? true: `FALSE. KEY: ${doc.key}`}`)
+        return cb({ "data": doc }, null)
+        // var t = trucks.where('currentJob', '==', jobId)
+        // t.get()
+        // .then(tDoc => {
+        //     if (!tDoc.exists) {
+        //         console.log(`Job id: ${jobId} Has truck id that does not exist. There could be no driver assigned to this load. Could not query for load information`)
+        //         return cb(null, null)
+        //     }
+        //     // Now we have the truck's unlock key
+        //     const key = tDoc.data().key
+        //     console.log(key)
+        //     var doc = jDoc.data()
+        //     console.log(`Job id: ${jobId}: Request for loadStatus: delivered: ${doc.delivered ? true: `FALSE. KEY: ${key}`}`)
+        //     if (!doc.delivered) { return cb({ "data": { "delivered": false, "key": key } }, null) }
             
-            // If delivered, then send back the delivery date and key
-            var del = new Date(doc.delivered._seconds * 1000 + doc.delivered._nanoseconds / 1000)
-            var datestring = `${del.getMonth() + 1}-${del.getDate()}-${del.getFullYear()}`
-            return cb({"data": { "delivered": datestring, "key": key}}, null)
-        })
+        //     // If delivered, then send back the delivery date and key
+        //     var del = new Date(doc.delivered._seconds * 1000 + doc.delivered._nanoseconds / 1000)
+        //     var datestring = `${del.getMonth() + 1}-${del.getDate()}-${del.getFullYear()}`
+        //     return cb({"data": { "delivered": datestring, "key": key}}, null)
+        // })
     })
 }
