@@ -70,7 +70,10 @@ module.exports.getJobs = function (truckId, cb) {
     jobs.get()
         .then(snapshot => {
             snapshot.forEach(doc => {
-                res.push(doc.data())
+                res.push({
+                    ...doc.data(),
+                    jobId: doc.id
+                })
             });
             return cb(res, null)
         })
@@ -132,7 +135,7 @@ module.exports.loadStatus = function(jobId, cb) {
         t.get()
         .then(tDoc => {
             if (!tDoc.exists) {
-                console.log(`Job id: ${jobId} Has truck id that does not exist. Could not query for load information`)
+                console.log(`Job id: ${jobId} Has truck id that does not exist. There could be no driver assigned to this load. Could not query for load information`)
                 return cb(null, null)
             }
             // Now we have the truck's unlock key
