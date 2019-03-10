@@ -6,12 +6,17 @@ router.get('/', (req, res) => {
     res.send('There is nothing here :(')
 })
 
-router.get('/api/v1/jobs', (req, res) => {
+router.get('/api/v1/jobs/:truckId', (req, res) => {
     // Send response with list of jobs, if the truck is availble
-    ns.isOnRoute(req.body.truckId, (onRoute, err) => {
+    ns.isOnRoute(req.params.truckId, (onRoute, err) => {
         if (err) res.status(500).send('Internal server error:', err)
         else if (onRoute) {
-            res.status(200).send('Truck is already on a route!')
+            res.status(200).send({
+                "error": {
+                    "code": 200,
+                    "message": "The truck is already delivering a load"
+                }
+            })
         }
         else {
             ns.getJobs(req.body.truckId, (jobs, err) => {
