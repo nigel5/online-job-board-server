@@ -57,10 +57,10 @@ router.post('/api/v1/reciever/check-in', (req, res) => {
     // Check in with unlock code. This confirms the physical location of the truck being at the desitnation.
     ns.recieved(req.body.truckId, req.body.jobId, req.body.key, (delivered, err) => {
         if (err) { return res.json(rb.formatError(500).status(500).end()) }
-        if (s === null && err === null) {
+        if (delivered === null && err === null) {
             res.json({ "error": { "message": `Could not sign off load ${req.body.jobId}` }})
         }
-        else if (s) {
+        else if (delivered) {
             res.json({ "data": { "delivered": delivered }})
         }
     })

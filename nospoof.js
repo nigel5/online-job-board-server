@@ -101,20 +101,20 @@ module.exports.recieved = function(truckId, jobId, key, cb) {
                 }
                 var selectedTruck = tDoc.data()
                 // Verify the key
-                if (selectedTruck.key === key) {
+                if (parseInt(selectedTruck.key) === parseInt(key)) {
                     t.update({ 
                         onRoute: false,
                         currentJob: '',
                         history: admin.firestore.FieldValue.arrayUnion(j.id)
                     })
                     j.update({ delivered: Date.now() })
-                    var del = new Date(doc.delivered._seconds * 1000 + doc.delivered._nanoseconds / 1000)
+                    var del = new Date(parseInt(tDoc.delivered))
                     console.log(`Truck id: ${truckId}: Truck id unlocked`)
                     console.log(`Job id: ${jobId}: job sucessfully delivered`)
                     return cb(`${del.getMonth() + 1}-${del.getDate()}-${del.getFullYear()}`, null)
                 }
                 else {
-                    console.log(`Truck id ${t.id} cannot unlocked`)
+                    console.log(`Truck id ${t.id} cannot unlock`)
                     return cb(false, null)
                 }
             })
@@ -148,7 +148,7 @@ module.exports.loadStatus = function(jobId, cb) {
         //     if (!doc.delivered) { return cb({ "data": { "delivered": false, "key": key } }, null) }
             
         //     // If delivered, then send back the delivery date and key
-        //     var del = new Date(doc.delivered._seconds * 1000 + doc.delivered._nanoseconds / 1000)
+        //     var del = new Date(tDoc.delivered)
         //     var datestring = `${del.getMonth() + 1}-${del.getDate()}-${del.getFullYear()}`
         //     return cb({"data": { "delivered": datestring, "key": key}}, null)
         // })
