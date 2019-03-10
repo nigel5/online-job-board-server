@@ -52,8 +52,9 @@ module.exports.takeJob = function (truckId, jobId, cb) {
                     var selectedJob = jDoc.data()
                     var selectedTruck = tDoc.data()
                     // Update truck and job
+                    const unlockKey = Math.floor(Math.random()*90000) + 10000
                     t.update({ onRoute: true, currentJob: j.id })
-                    j.update({ driver: t.id })
+                    j.update({ driver: t.id, key: unlockKey })
 
                     console.log(`Job id: ${jobId}: Job id taken by truck id ${truckId}`)
                     return cb(selectedJob, null)
@@ -86,13 +87,13 @@ module.exports.recieved = function(truckId, jobId, key, cb) {
     t.get()
     .then(tDoc => {
         if (!tDoc.exists) {
-            console.log(`Truck id: ${truckId}: Truck id does not exist`)
+            console.log(`Truck id: ${truckId}: Truck id does not exist. Could not sign off on load ${jobId}`)
             return cb(null, null)
         }
         j.get()
             .then(jDoc => {
                 if (!jDoc.exists) {
-                    console.log(`Job id: ${jobId}: Job id does not exist`)
+                    console.log(`Job id: ${jobId}: Job id does not exist. Could not sign off on load ${jobId}`)
                     return cb(null, null)
                 }
                 var selectedTruck = tDoc.data()
@@ -104,9 +105,10 @@ module.exports.recieved = function(truckId, jobId, key, cb) {
                         history: admin.firestore.FieldValue.arrayUnion(j.id)
                     })
                     j.update({ delivered: Date.now() })
+                    var del = new Date(doc.delivered._seconds * 1000 + doc.delivered._nanoseconds / 1000)
                     console.log(`Truck id: ${truckId}: Truck id unlocked`)
                     console.log(`Job id: ${jobId}: job sucessfully delivered`)
-                    return cb(true, null)
+                    return cb(`${del.getMonth() + 1}-${del.getDate()}-${del.getFullYear()}`, null)
                 }
                 else {
                     console.log(`Truck id ${t.id} cannot unlocked`)
@@ -118,19 +120,32 @@ module.exports.recieved = function(truckId, jobId, key, cb) {
 
 module.exports.loadStatus = function(jobId, cb) {
     var j = jobs.doc(jobId)
+
     j.get()
     .then(jDoc => {
         if (!jDoc.exists) {
             console.log(`Job id: ${jobId}: Request for loadStatus: Job id does not exist`)
             return cb(null, null)
         }
-        var doc = jDoc.data()
-        console.log(`Job id: ${jobId}: Request for loadStatus: delivered: ${doc.delivered ? true: "FALSE"}`)
-        if (!doc.delivered) {
-            return cb(false, null)
-        }
-
-        var del = new Date(doc.delivered._seconds * 1000 + doc.delivered._nanoseconds / 1000)
-        return cb(`${del.getMonth() + 1}-${del.getDate()}-${del.getFullYear()}`, null)
+        // Search for trucker, by currentJob field
+        var t = trucks.where('currentJob', '==', jobId)
+        t.get()
+        .then(tDoc => {
+            if (!tDoc.exists) {
+                console.log(`Job id: ${jobId} Has truck id that does not exist. Could not query for load information`)
+                return cb(null, null)
+            }
+            // Now we have the truck's unlock key
+            const key = tDoc.data().key
+            console.log(key)
+            var doc = jDoc.data()
+            console.log(`Job id: ${jobId}: Request for loadStatus: delivered: ${doc.delivered ? true: `FALSE. KEY: ${key}`}`)
+            if (!doc.delivered) { return cb({ "data": { "delivered": false, "key": key } }, null) }
+            
+            // If delivered, then send back the delivery date and key
+            var del = new Date(doc.delivered._seconds * 1000 + doc.delivered._nanoseconds / 1000)
+            var datestring = `${del.getMonth() + 1}-${del.getDate()}-${del.getFullYear()}`
+            return cb({"data": { "delivered": datestring, "key": key}}, null)
+        })
     })
 }
