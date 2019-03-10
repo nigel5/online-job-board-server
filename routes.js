@@ -27,7 +27,7 @@ router.post('/api/v1/select-job/:jobId', (req, res) => {
     ns.isOnRoute(req.params.jobId, (onRoute, err) => {
         if (err) { return res.send('Internal server error:', err) }
         if (onRoute === null && err === null) {
-            res.send('Invalid job id. Where did you get that from?').status(400).end()
+            res.send('Invalid truck id. Where did you get that from?').status(400).end()
         }
         else if (onRoute) {
             res.send('Truck is already on a route!').status(200).end()
