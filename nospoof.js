@@ -15,13 +15,15 @@ module.exports.isOnRoute = function (truckId, cb) {
     t.get()
         .then(doc => {
         if (!doc.exists) {
-            console.log(`No such truck id: ${truckId}`)
+            console.log(`Truck id: ${truckId}: Does not exist`)
             return cb(null, null)
         }
         else {
             if (doc.data().onRoute) {
+                console.log(`Truck id: ${truckId}: Request isOnRoute = true`)
                 return cb(true, null)
             } else {
+                console.log(`Truck id: ${truckId}: Request isOnRoute = false`)
                 return cb(false, null)
             }
         }})
@@ -37,14 +39,14 @@ module.exports.takeJob = function (truckId, jobId, cb) {
 
     t.get()
         .then(tDoc => {
-            if (!tDoc.exists) { 
-                console.log(`No such truck id: ${truckId}`)
+            if (!tDoc.exists) {
+                console.log(`Truck id: ${truckId}: Truck id does not exist`)
                 return cb(null, null)
             }
             j.get()
                 .then(jDoc => {
                     if (!jDoc.exists) {
-                        console.log(`No such job id: ${jobId}`)
+                        console.log(`Job id: ${jobId}: Job id does not exist`)
                         return cb(null, null)
                     }
                     var selectedJob = jDoc.data()
@@ -52,7 +54,8 @@ module.exports.takeJob = function (truckId, jobId, cb) {
                     // Update truck and job
                     t.update({ onRoute: true, currentJob: j.id })
                     j.update({ driver: t.id })
-                    
+
+                    console.log(`Job id: ${jobId}: Job id taken by truck id ${truckId}`)
                     return cb(selectedJob, null)
                 })
         })
@@ -82,13 +85,13 @@ module.exports.recieved = function(truckId, jobId, key, cb) {
     t.get()
     .then(tDoc => {
         if (!tDoc.exists) {
-            console.log(`No such truck id: ${truckId}`)
+            console.log(`Truck id: ${truckId}: Truck id does not exist`)
             return cb(null, null)
         }
         j.get()
             .then(jDoc => {
                 if (!jDoc.exists) {
-                    console.log(`No such job id: ${jobId}`)
+                    console.log(`Job id: ${jobId}: Job id does not exist`)
                     return cb(null, null)
                 }
                 var selectedTruck = tDoc.data()
@@ -100,7 +103,8 @@ module.exports.recieved = function(truckId, jobId, key, cb) {
                         history: admin.firestore.FieldValue.arrayUnion(j.id)
                     })
                     j.update({ delivered: Date.now() })
-                    console.log(`Truck id ${t.id} unlocked. Job id ${j.id} complete`)
+                    console.log(`Truck id: ${truckId}: Truck id unlocked`)
+                    console.log(`Job id: ${jobId}: job sucessfully delivered`)
                     return cb(true, null)
                 }
                 else {

@@ -8,7 +8,7 @@ router.get('/', (req, res) => {
 
 router.get('/api/v1/jobs', (req, res) => {
     // Send response with list of jobs, if the truck is availble
-    ns.isOnRoute('NakLrvNzjDx5TDcbzWjM', (onRoute, err) => {
+    ns.isOnRoute(req.body.truckId, (onRoute, err) => {
         if (err) res.send('Internal server error:', err)
         else if (onRoute) {
             res.send('Truck is already on a route!')
