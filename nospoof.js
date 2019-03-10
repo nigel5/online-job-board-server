@@ -28,7 +28,7 @@ module.exports.isOnRoute = function (truckId, cb) {
         .catch(err => {
             console.log('Error getting document', err)
             return cb(null, err)
-        });
+        })
 }
 
 module.exports.takeJob = function (truckId, jobId, cb) {
@@ -61,11 +61,13 @@ module.exports.takeJob = function (truckId, jobId, cb) {
 module.exports.getJobs = function (truckId, cb) {
     // TODO: Need to retrieve jobs near truck location!
     //var j  = jobs.doc(truckId)
+    let res = []
     jobs.get()
         .then(snapshot => {
             snapshot.forEach(doc => {
-                return cb(doc.data(), null)
+                res.push(doc.data())
             });
+            return cb(res, null)
         })
         .catch(err => {
             console.log('Error retrieving job documents', err)
