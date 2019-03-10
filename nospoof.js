@@ -125,7 +125,12 @@ module.exports.loadStatus = function(jobId, cb) {
             return cb(null, null)
         }
         var doc = jDoc.data()
-        console.log(`Job id: ${jobId}: Request for loadStatus: delivered: ${doc.delivered}`)
-        return cb(doc.delivered, null)
+        console.log(`Job id: ${jobId}: Request for loadStatus: delivered: ${doc.delivered ? true: "FALSE"}`)
+        if (!doc.delivered) {
+            return cb(false, null)
+        }
+
+        var del = new Date(doc.delivered._seconds * 1000 + doc.delivered._nanoseconds / 1000)
+        return cb(`${del.getMonth() + 1}-${del.getDate()}-${del.getFullYear()}`, null)
     })
 }
