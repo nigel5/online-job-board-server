@@ -15,6 +15,7 @@ module.exports.isOnRoute = function (truckId, cb) {
         .then(doc => {
         if (!doc.exists) {
             console.log('No such document!')
+            return cb(null, null)
         }
         else {
             if (doc.data().onRoute) {
@@ -24,12 +25,35 @@ module.exports.isOnRoute = function (truckId, cb) {
             }
         }})
         .catch(err => {
-            console.log('Error getting document', err);
+            console.log('Error getting document', err)
             return cb(null, err)
         });
 }
 
+module.exports.takeJob = function (truckId, jobId, cb) {
+    var t = trucks.doc(truckId)
+    var j = jobs.doc(jobId)
+
+    t.get()
+        .then(tDoc => {
+            if (!tDoc.exists) return cb(null, null)
+            j.get()
+                .then(jDoc => {
+                    if (!jDoc.exists) return cb()
+                    var selectedJob = jDoc.data()
+                    var selectedTruck = tDoc.data()
+                    // Update truck and job
+                    t.update({ onRoute: true, currentJob: j.id })
+                    j.update({ currentDriver: t.id })
+                    
+                    return cb(selectedJob, null)
+                })
+        })
+
+}
+
 module.exports.getJobs = function (truckId, cb) {
+    // TODO: Need to retrieve jobs near truck location!
     //var j  = jobs.doc(truckId)
     jobs.get()
         .then(snapshot => {
