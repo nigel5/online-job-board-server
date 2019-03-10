@@ -6,7 +6,7 @@ module.exports.formatJobs = (jobs) => {
         }
 }
 
-module.exports.error = (code) => {
+module.exports.formatError = (code) => {
     return {
         "error": {
             "code": code,

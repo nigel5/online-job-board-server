@@ -115,3 +115,17 @@ module.exports.recieved = function(truckId, jobId, key, cb) {
             })
     })
 }
+
+module.exports.loadStatus = function(jobId, cb) {
+    var j = jobs.doc(jobId)
+    j.get()
+    .then(jDoc => {
+        if (!jDoc.exists) {
+            console.log(`Job id: ${jobId}: Request for loadStatus: Job id does not exist`)
+            return cb(null, null)
+        }
+        var doc = jDoc.data()
+        console.log(`Job id: ${jobId}: Request for loadStatus: delivered: ${doc.delivered}`)
+        return cb(doc.delivered, null)
+    })
+}

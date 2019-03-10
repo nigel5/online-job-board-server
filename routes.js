@@ -25,7 +25,7 @@ router.get('/api/v1/jobs', (req, res) => {
 router.post('/api/v1/select-job/:jobId', (req, res) => {
     // Only be able to select the job if the are avaiable
     ns.isOnRoute(req.params.jobId, (onRoute, err) => {
-        if (err) res.send('Internal server error:', err)
+        if (err) { return res.send('Internal server error:', err) }
         if (onRoute === null && err === null) {
             res.send('Invalid job id. Where did you get that from?').status(400).end()
         }
@@ -33,21 +33,24 @@ router.post('/api/v1/select-job/:jobId', (req, res) => {
             res.send('Truck is already on a route!').status(200).end()
         }
         else {
-            res.send('Not on route!')
-            ns.takeJob(req.params.jobId, req.body.truckId, () => {
-                
+            ns.takeJob(req.params.jobId, req.body.truckId, (job, err) => {
+                if (err) { return res.json(rb.formatError(500)).status(500).end() }
+                res.json(rb.formatJobs({ job })).status(200).end()
             })
         }  
     })
-    // Set status to on route
 })
 
-router.post('api/v1/update-job/:jobId', (req, res) => {
+router.post('/api/v1/update-job/:jobId', (req, res) => {
     res.send('There is nothing here :(')
 })
 
-router.get('/api/v1/reciever/status', (req, res) => {
+router.get('/api/v1/reciever/status/:jobId', (req, res) => {
     // Send response with current status of their delivery
+    ns.loadStatus(req.params.jobId, (delivered, err) => {
+        if (err) { return res.json(rb.formatError(500).status(500).end() )}
+        res.json({ "data": {"delivered": delivered }}).status(200).end()
+    })
 })
 
 router.post('/api/v1/reciever/check-in', (req, res) => {
