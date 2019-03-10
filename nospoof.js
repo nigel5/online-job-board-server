@@ -83,22 +83,17 @@ module.exports.getJobs = function (truckId, cb) {
         })
 }
 
-module.exports.recieved = function(truckId, jobId, key, cb) {
+module.exports.recieved = function(jobId, truckId, key, cb) {
     var t = trucks.doc(truckId)
     var j = jobs.doc(jobId)
-
-    t.get()
-    .then(tDoc => {
-        if (!tDoc.exists) {
-            console.log(`Truck id: ${truckId}: Truck id does not exist. Could not sign off on load ${jobId}`)
-            return cb(null, null)
-        }
-        j.get()
-            .then(jDoc => {
-                if (!jDoc.exists) {
-                    console.log(`Job id: ${jobId}: Job id does not exist. Could not sign off on load ${jobId}`)
-                    return cb(null, null)
-                }
+    j.get()
+        .then(jDoc => {
+            if (!jDoc.exists) {
+                console.log(`Job id: ${jobId}: Job id does not exist. Could not sign off on load ${jobId}`)
+                return cb(null, null)
+            }
+            t.get()
+            .then(tDoc => {
                 var selectedTruck = tDoc.data()
                 // Verify the key
                 if (parseInt(selectedTruck.key) === parseInt(key)) {
@@ -118,7 +113,7 @@ module.exports.recieved = function(truckId, jobId, key, cb) {
                     return cb(false, null)
                 }
             })
-    })
+        })
 }
 
 module.exports.loadStatus = function(jobId, cb) {
@@ -152,5 +147,31 @@ module.exports.loadStatus = function(jobId, cb) {
         //     var datestring = `${del.getMonth() + 1}-${del.getDate()}-${del.getFullYear()}`
         //     return cb({"data": { "delivered": datestring, "key": key}}, null)
         // })
+    })
+}
+
+module.exports.getTruck = function(truckId, cb) {
+    var t = trucks.doc(truckId)
+
+    t.get()
+    .then(tDoc => {
+        if (!tDoc.exists) {
+            console.log(`Truck id: ${truckId}: Truck id does not exist. Could not sign off on load ${jobId}`)
+            return cb(null, null)
+        }
+        return cb(tDoc.data(), null)
+    })
+}
+
+module.exports.getJob = function(jobId, cb) {
+    var j = jobs.doc(jobId)
+
+    j.get()
+    .then(jDoc => {
+        if (!jDoc.exists) {
+            console.log(`Truck id: ${jobId}: Job id does not exist ${jobId}`)
+            return cb(null, null)
+        }
+        return cb(jDoc.data(), null)
     })
 }

@@ -27,6 +27,25 @@ router.get('/api/v1/jobs/:truckId', (req, res) => {
     })
 })
 
+router.get('/api/v1/profile/:truckId', (req, res) => {
+    // Send response with list of jobs, if the truck is availble
+    ns.getTruck(req.params.truckId, (truck, err) => {
+        if (err) res.status(500).send(rb.formatError(500))
+        res.status(200).send({ "data": { "truck": truck }})
+    })
+})
+
+router.get('/api/v1/job/:jobId', (req, res) => {
+    // Send response with list of jobs, if the truck is availble
+    ns.getJob(req.params.jobId, (job, err) => {
+        if (err) return res.status(500).send('Internal server error:', err)
+        ns.getJob(req.params.jobId, (job, err) => {
+            if (err) res.status(500).send(rb.formatError(500))
+            res.status(200).send({ "data": { "job": job }})
+        })
+    })
+})
+
 router.post('/api/v1/select-job/:jobId', (req, res) => {
     // Only be able to select the job if the are avaiable
     ns.isOnRoute(req.body.truckId, (onRoute, err) => {
@@ -60,7 +79,7 @@ router.get('/api/v1/reciever/status/:jobId', (req, res) => {
 
 router.post('/api/v1/reciever/check-in', (req, res) => {
     // Check in with unlock code. This confirms the physical location of the truck being at the desitnation.
-    ns.recieved(req.body.truckId, req.body.jobId, req.body.key, (delivered, err) => {
+    ns.recieved(req.body.jobId, req.body.truckId, req.body["key"], (delivered, err) => {
         if (err) { return res.json(rb.formatError(500).status(500).end()) }
         if (delivered === null && err === null) {
             res.json({ "error": { "message": `Could not sign off load ${req.body.jobId}` }})
@@ -69,7 +88,6 @@ router.post('/api/v1/reciever/check-in', (req, res) => {
             res.json({ "data": { "delivered": delivered }})
         }
     })
-    // Update truck's history, and set 'on-route' to be false
 })
 
 module.exports = router
