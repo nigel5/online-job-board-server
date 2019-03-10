@@ -50,13 +50,13 @@ module.exports.takeJob = function (truckId, jobId, cb) {
                         return cb(null, null)
                     }
                     var selectedJob = jDoc.data()
-                    var selectedTruck = tDoc.data()
+                    // var selectedTruck = tDoc.data()
                     // Update truck and job
                     const unlockKey = Math.floor(Math.random()*90000) + 10000
                     t.update({ onRoute: true, currentJob: j.id, key: unlockKey })
                     j.update({ driver: t.id, key: unlockKey })
 
-                    console.log(`Job id: ${jobId}: Job id taken by truck id ${truckId}. Key: ${unlockkey}`)
+                    console.log(`Job id: ${jobId}: Job id taken by truck id ${truckId}. Key: ${unlockKey}`)
                     return cb(selectedJob, null)
                 })
                 .catch(err => { return cb(null, err) })

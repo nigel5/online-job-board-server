@@ -39,7 +39,7 @@ router.post('/api/v1/select-job/:jobId', (req, res) => {
         }
         else {
             ns.takeJob(req.body.truckId, req.params.jobId, (job, err) => {
-                if (err) { return res.json(rb.formatError(500)).status(500).end() }
+                if (err) { return res.status(500).send(rb.formatError(500)).end();  }
                 res.json(rb.formatJobs({ job })).status(200).end()
             })
         }  
