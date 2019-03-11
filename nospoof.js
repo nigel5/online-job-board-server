@@ -92,6 +92,11 @@ module.exports.recieved = function(jobId, key, cb) {
                 console.log(`Job id: ${jobId}: Job id does not exist. Could not sign off on load`)
                 return cb(null, null)
             }
+            // Job is already done
+            if (!jDoc.data["status"]) {
+                console.log(`Job id: ${jobId}: Attempt to sign off on load that was already completed`)
+                return cb(false, null)
+            }
             // Find truck profile, and verify key
             trucks.doc(jDoc.data().driver).get()
             .then(tDoc => {
