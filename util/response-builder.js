@@ -6,11 +6,11 @@ module.exports.formatJobs = (jobs) => {
         }
 }
 
-module.exports.formatError = (code) => {
+module.exports.formatError = (code, message) => {
     return {
         "error": {
             "code": code,
-            "message": "Internal server error (not your fault)"
+            "message": message
         }
     }
 }

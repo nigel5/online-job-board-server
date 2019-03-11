@@ -57,6 +57,7 @@ module.exports.takeJob = function (truckId, jobId, cb) {
                     j.update({ driver: t.id, key: unlockKey })
 
                     console.log(`Job id: ${jobId}: Job id taken by truck id ${truckId}. Key: ${unlockKey}`)
+                    // Take the job off the listing
                     return cb(selectedJob, null)
                 })
                 .catch(err => { return cb(null, err) })
@@ -83,37 +84,50 @@ module.exports.getJobs = function (truckId, cb) {
         })
 }
 
-module.exports.recieved = function(jobId, truckId, key, cb) {
-    var t = trucks.doc(truckId)
+module.exports.recieved = function(jobId, key, cb) {
     var j = jobs.doc(jobId)
+
     j.get()
-        .then(jDoc => {
+    .then(jDoc => {
             if (!jDoc.exists) {
                 console.log(`Job id: ${jobId}: Job id does not exist. Could not sign off on load ${jobId}`)
                 return cb(null, null)
             }
-            t.get()
+            // Find truck profile, and verify key
+            trucks.doc(jDoc.data().driver).get()
             .then(tDoc => {
-                var selectedTruck = tDoc.data()
-                // Verify the key
-                if (parseInt(selectedTruck.key) === parseInt(key)) {
-                    t.update({ 
+                if (!tDoc.exists) {
+                    console.log(`No driver exists. Could not sign off on load ${jobId}`)
+                    return cb(null, null)
+                }
+
+                var profile = tDoc.data()
+                if (parseInt(profile.key) === parseInt(key)) {
+                    t.update({
+                        key: '',
                         onRoute: false,
-                        currentJob: '',
                         history: admin.firestore.FieldValue.arrayUnion(j.id)
                     })
-                    j.update({ delivered: Date.now() })
-                    var del = new Date(parseInt(tDoc.delivered))
-                    console.log(`Truck id: ${truckId}: Truck id unlocked`)
-                    console.log(`Job id: ${jobId}: job sucessfully delivered`)
-                    return cb(`${del.getMonth() + 1}-${del.getDate()}-${del.getFullYear()}`, null)
+                    .then(() => {
+                        console.log(`Truck id: ${profile.id}: ${jobId} completed`)
+                        j.update({ status: "completed "})
+                        .then(() => {
+                            console.log(`Job id: ${jobId}: Successfully updated to status 'completed'`)
+                            // If delivered, then send back the delivery date
+                            var del = new Date(tDoc.delivered)
+                            var datestring = `${del.getMonth() + 1}-${del.getDate()}-${del.getFullYear()}`
+                            return cb({ "data": { "delivered": datestring }}, null)
+                        })
+                    })
+                    .catch(err => {
+                        console.error(`Error updating truck profile to complete job ${jobId}`)
+                        return cb(null, err)
+                    })
                 }
-                else {
-                    console.log(`Truck id ${t.id} cannot unlock`)
-                    return cb(false, null)
-                }
-            })
-        })
+                return cb(false, null)
+            }).catch(err => console.log(err))
+        }
+    )
 }
 
 module.exports.loadStatus = function(jobId, cb) {
@@ -169,7 +183,7 @@ module.exports.getJob = function(jobId, cb) {
     j.get()
     .then(jDoc => {
         if (!jDoc.exists) {
-            console.log(`Truck id: ${jobId}: Job id does not exist ${jobId}`)
+            console.log(`Job id does not exist ${jobId}`)
             return cb(null, null)
         }
         return cb(jDoc.data(), null)

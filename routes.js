@@ -36,29 +36,31 @@ router.get('/api/v1/profile/:truckId', (req, res) => {
 })
 
 router.get('/api/v1/job/:jobId', (req, res) => {
-    // Send response with list of jobs, if the truck is availble
+    // Sends the requested job information
     ns.getJob(req.params.jobId, (job, err) => {
-        if (err) return res.status(500).send('Internal server error:', err)
-        ns.getJob(req.params.jobId, (job, err) => {
-            if (err) res.status(500).send(rb.formatError(500))
+        if (err) return res.status(500).send(rb.formatError(500, "Internal server error (not your fault)"))
+        if (job === null && err === null) {
+            return res.status(200).send(rb.formatError(200, "Invalid job id"))
+        }
+        else {
             return res.status(200).send({ "data": { "job": job }})
-        })
+        }
     })
 })
 
 router.post('/api/v1/select-job/:jobId', (req, res) => {
     // Only be able to select the job if the are avaiable
     ns.isOnRoute(req.body.truckId, (onRoute, err) => {
-        if (err) { return res.status(500).send('Internal server error:', err) }
+        if (err) { return res.status(500).send(rb.formatError(500, "Internal server error (not your fault)")) }
         if (onRoute === null && err === null) {
-            return res.status(400).send('Invalid truck id. Where did you get that from?')
+            return res.status(200).send(rb.formatError(200, "Invalid job id"))
         }
         else if (onRoute) {
-            return res.status(200).send('Truck is already on a route!')
+            return res.status(200).send(rb.formatError(200, "Truck is already on a job"))
         }
         else {
             ns.takeJob(req.body.truckId, req.params.jobId, (job, err) => {
-                if (err) { return res.status(500).send(rb.formatError(500)).end();  }
+                if (err) { return res.status(500).send(rb.formatError(500, "Internal server errorr (not your fault)")).end() }
                 return res.status(200).send(rb.formatJobs({ job }))
             })
         }  
@@ -69,26 +71,21 @@ router.post('/api/v1/update-job/:jobId', (req, res) => {
     return res.send('There is nothing here :(')
 })
 
-router.get('/api/v1/reciever/status/:jobId', (req, res) => {
-    // Send response with current status of their delivery and unlock code
-    ns.loadStatus(req.params.jobId, (info, err) => {
-        if (err) { return res.status(500).send(rb.formatError(500) )}
-        return res.send(info).status(200)
-    })
-})
-
 router.post('/api/v1/reciever/check-in', (req, res) => {
     // Check in with unlock code. This confirms the physical location of the truck being at the desitnation.
     ns.recieved(req.body.jobId, req.body["key"], (delivered, err) => {
         if (err) { return res.status(500).send(rb.formatError(500)) }
         if (!delivered && !err) {
-            return res.status(200).send({ "error": { "message": `Could not sign off load ${req.body.jobId}. Is that the correct identifier?` }})
+            return res.status(200).send(rb.formatError(200,`Could not sign off load ${req.body.jobId}. Is that the correct identifier?`))
         }
         else if (delivered) {
             return res.status(200).send({ "data": { "delivered": delivered }})
         }
+        else if (!delivered) {
+            return res.status(200).send(rb.formatError(200, `Could not sign off load ${req.body.jobId}. Is that the correct key?`))
+        }
         else {
-            return res.status(300).send({ "error": { "message": "Could not sign off load due to unknown issues. Please contact support for help" }})
+            return res.status(300).send(rb.formatError(300, "Could not sign off load due to unknown issues. Please contact support for help"))
         }
     })
 })
