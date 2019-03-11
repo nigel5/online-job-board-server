@@ -50,17 +50,15 @@ module.exports.takeJob = function (truckId, jobId, cb) {
                         return cb(null, null)
                     }
                     var selectedJob = jDoc.data()
-                    // var selectedTruck = tDoc.data()
                     // Update truck and job
                     const unlockKey = Math.floor(Math.random()*90000) + 10000
                     t.update({ onRoute: true, currentJob: j.id, key: unlockKey })
-                    j.update({ driver: t.id, key: unlockKey })
+                    j.update({ driver: t.id, key: unlockKey, status: "inprogress" })
 
                     console.log(`Job id: ${jobId}: Job id taken by truck id ${truckId}. Key: ${unlockKey}`)
-                    // Take the job off the listing
                     return cb(selectedJob, null)
                 })
-                .catch(err => { return cb(null, err) })
+                .catch(err => { console.error('Error taking job', err); return cb(null, err) })
         })
 }
 
@@ -76,10 +74,11 @@ module.exports.getJobs = function (truckId, cb) {
                     jobId: doc.id
                 })
             });
+            console.log(`Truck id: ${truckId}: Requested for list of jobs`)
             return cb(res, null)
         })
         .catch(err => {
-            console.log('Error retrieving job documents', err)
+            console.error('Error retrieving job documents', err)
             return cb(null, err)
         })
 }
@@ -90,14 +89,14 @@ module.exports.recieved = function(jobId, key, cb) {
     j.get()
     .then(jDoc => {
             if (!jDoc.exists) {
-                console.log(`Job id: ${jobId}: Job id does not exist. Could not sign off on load ${jobId}`)
+                console.log(`Job id: ${jobId}: Job id does not exist. Could not sign off on load`)
                 return cb(null, null)
             }
             // Find truck profile, and verify key
             trucks.doc(jDoc.data().driver).get()
             .then(tDoc => {
                 if (!tDoc.exists) {
-                    console.log(`No driver exists. Could not sign off on load ${jobId}`)
+                    console.log(`Job id: ${jobId}: No driver exists. Could not sign off on load`)
                     return cb(null, null)
                 }
 
@@ -109,7 +108,7 @@ module.exports.recieved = function(jobId, key, cb) {
                         history: admin.firestore.FieldValue.arrayUnion(j.id)
                     })
                     .then(() => {
-                        console.log(`Truck id: ${profile.id}: ${jobId} completed`)
+                        console.log(`Truck id: ${profile.id}: Completed its job`)
                         j.update({ status: "completed "})
                         .then(() => {
                             console.log(`Job id: ${jobId}: Successfully updated to status 'completed'`)
@@ -124,8 +123,9 @@ module.exports.recieved = function(jobId, key, cb) {
                         return cb(null, err)
                     })
                 }
+                console.log(`Job id: ${jobId}: Incorrect sign off key`)
                 return cb(false, null)
-            }).catch(err => console.log(err))
+            }).catch(err => { cb(null, err); console.error('Error recieving job', err) })
         }
     )
 }
@@ -142,25 +142,6 @@ module.exports.loadStatus = function(jobId, cb) {
         var doc = jDoc.data()
         console.log(`Job id: ${jobId}: Request for loadStatus: delivered: ${doc.delivered ? true: `FALSE. KEY: ${doc.key}`}`)
         return cb({ "data": doc }, null)
-        // var t = trucks.where('currentJob', '==', jobId)
-        // t.get()
-        // .then(tDoc => {
-        //     if (!tDoc.exists) {
-        //         console.log(`Job id: ${jobId} Has truck id that does not exist. There could be no driver assigned to this load. Could not query for load information`)
-        //         return cb(null, null)
-        //     }
-        //     // Now we have the truck's unlock key
-        //     const key = tDoc.data().key
-        //     console.log(key)
-        //     var doc = jDoc.data()
-        //     console.log(`Job id: ${jobId}: Request for loadStatus: delivered: ${doc.delivered ? true: `FALSE. KEY: ${key}`}`)
-        //     if (!doc.delivered) { return cb({ "data": { "delivered": false, "key": key } }, null) }
-            
-        //     // If delivered, then send back the delivery date and key
-        //     var del = new Date(tDoc.delivered)
-        //     var datestring = `${del.getMonth() + 1}-${del.getDate()}-${del.getFullYear()}`
-        //     return cb({"data": { "delivered": datestring, "key": key}}, null)
-        // })
     })
 }
 

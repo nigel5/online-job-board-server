@@ -79,6 +79,7 @@ router.post('/api/v1/reciever/check-in', (req, res) => {
             return res.status(200).send(rb.formatError(200,`Could not sign off load ${req.body.jobId}. Is that the correct identifier?`))
         }
         else if (delivered) {
+            console.log("")
             return res.status(200).send({ "data": { "delivered": delivered }})
         }
         else if (!delivered) {
