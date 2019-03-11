@@ -49,7 +49,7 @@ router.get('/api/v1/job/:jobId', (req, res) => {
 })
 
 router.post('/api/v1/select-job/:jobId', (req, res) => {
-    // Only be able to select the job if the are avaiable
+    // Only be able to select the job if they are avaiable
     ns.isOnRoute(req.body.truckId, (onRoute, err) => {
         if (err) { return res.status(500).send(rb.formatError(500, "Internal server error (not your fault)")) }
         if (onRoute === null && err === null) {
@@ -60,7 +60,7 @@ router.post('/api/v1/select-job/:jobId', (req, res) => {
         }
         else {
             ns.takeJob(req.body.truckId, req.params.jobId, (job, err) => {
-                if (err) { return res.status(500).send(rb.formatError(500, "Internal server errorr (not your fault)")).end() }
+                if (err) { return res.status(500).send(rb.formatError(500, "Internal server error (not your fault)")) }
                 return res.status(200).send(rb.formatJobs({ job }))
             })
         }  
@@ -75,11 +75,10 @@ router.post('/api/v1/reciever/check-in', (req, res) => {
     // Check in with unlock code. This confirms the physical location of the truck being at the desitnation.
     ns.recieved(req.body.jobId, req.body["key"], (delivered, err) => {
         if (err) { return res.status(500).send(rb.formatError(500)) }
-        if (!delivered && !err) {
+        else if (!delivered && !err) {
             return res.status(200).send(rb.formatError(200,`Could not sign off load ${req.body.jobId}. Is that the correct identifier?`))
         }
         else if (delivered) {
-            console.log("")
             return res.status(200).send({ "data": { "delivered": delivered }})
         }
         else if (!delivered) {

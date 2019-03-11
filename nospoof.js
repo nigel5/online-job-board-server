@@ -93,12 +93,14 @@ module.exports.recieved = function(jobId, key, cb) {
                 return cb(null, null)
             }
             // Job is already done
-            if (!jDoc.data["status"]) {
+            var currentJob = jDoc.data()
+            if (currentJob.status === "completed") {
                 console.log(`Job id: ${jobId}: Attempt to sign off on load that was already completed`)
                 return cb(false, null)
             }
             // Find truck profile, and verify key
-            trucks.doc(jDoc.data().driver).get()
+            t = trucks.doc(currentJob.driver)
+            t.get()
             .then(tDoc => {
                 if (!tDoc.exists) {
                     console.log(`Job id: ${jobId}: No driver exists. Could not sign off on load`)
@@ -114,7 +116,7 @@ module.exports.recieved = function(jobId, key, cb) {
                     })
                     .then(() => {
                         console.log(`Truck id: ${profile.id}: Completed its job`)
-                        j.update({ status: "completed "})
+                        j.update({ status: "completed"})
                         .then(() => {
                             console.log(`Job id: ${jobId}: Successfully updated to status 'completed'`)
                             // If delivered, then send back the delivery date
@@ -128,9 +130,11 @@ module.exports.recieved = function(jobId, key, cb) {
                         return cb(null, err)
                     })
                 }
-                console.log(`Job id: ${jobId}: Incorrect sign off key`)
-                return cb(false, null)
-            }).catch(err => { cb(null, err); console.error('Error recieving job', err) })
+                else { 
+                    console.log(`Job id: ${jobId}: Incorrect sign off key`)
+                    return cb(false, null)
+                }
+            }).catch(err => { console.error('Error recieving job', err); return cb(null, err);  })
         }
     )
 }
