@@ -10,6 +10,10 @@ router.get('/api/v1/jobs/:truckId', (req, res) => {
     // Send response with list of jobs, if the truck is availble
     ns.isOnRoute(req.params.truckId, (onRoute, err) => {
         if (err) res.status(500).send('Internal server error:', err)
+        else if (onRoute === null && err === null) {
+            console.log(`Truck id: ${req.params.truckId}: Does not exist`)
+            return res.status(200).send(rb.formatError(200, "Invalid truck id"))
+        }
         else if (onRoute) {
             return res.status(200).send({
                 "error": {
